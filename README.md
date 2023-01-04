@@ -18,7 +18,7 @@ and held as private information. When playing first or when facing a pass from t
 can either fold, call the 2 chips or raise to 4 chips. When facing a raise a player can either call or fold.
 
 After the first betting round is finished and if no one has folded, one card is randomly chosen from the remaining 4 cards and dealt in the flop. The flop card is then combined with 
-each of the players' pocket hand to make up for their hand. The ranks work as in Texas Hold'Em, with pairs beating high cards. When the flop is dealt, there's a second betting round, in which the same rules 
+each of the players' pocket card to make up for their hand. The ranks work as in Texas Hold'Em, with pairs beating high cards. When the flop is dealt, there's a second betting round, in which the same rules 
 as in the first betting round apply. If the showdown is reached, the player with the highest ranked hand wins the pot.
 
 ## Counterfactual Regret Minimization
