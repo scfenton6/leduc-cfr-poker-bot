@@ -1,5 +1,3 @@
-from info_set import InformationSet
-
 chance_nodes = {'bc','xx', 'xbc', 'brc', 'xbrc'}
 
 def rank(cards):
