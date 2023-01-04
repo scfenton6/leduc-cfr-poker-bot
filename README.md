@@ -49,8 +49,11 @@ alone.
 
 ## The code
 
-The CFR implementation for Leduc poker is stored in the files `leduc_cfr.py` and `game_utils.py`. `leduc_game.py` simulates
-a game consisting of `n_rounds` rounds of Leduc poker between two players whose strategies are given, and returns an array 
+The CFR implementation for Leduc poker is stored in the file `leduc_cfr.py`, using the utilities from `game_utils.py`. 
+After being trained, the CFR bot's strategies are stored in a dictionary having game states as keys and their corresponding
+strategies as values, and exported to the json file `leduc_strats.json`.
+
+`leduc_game.py` simulates a game consisting of `n_rounds` rounds of Leduc poker between two players whose strategies are given, and returns an array 
 storing the accumulated utility of the first player for each iteration of the game.
 
 In `cfr_vs_others.py`, two bots are created: `random_strat`, whose actions are totally random, and `honest_strat`, which plays
