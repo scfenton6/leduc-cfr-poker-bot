@@ -47,19 +47,134 @@ using CFR to update their strategies play against each other, as the number of i
 pair of strategies converges to a Nash equilibrium, in which no player can expect to improve play by changing strategy 
 alone.
 
-## The code
+## Training our CFR bot
 
-The CFR implementation for Leduc poker is stored in the file `leduc_cfr.py`, using the utilities from `game_utils.py`. 
-After being trained, the CFR bot's strategies are stored in a dictionary having game states as keys and their corresponding
-strategies as values, and exported to the json file `leduc_strats.json`.
+To train the CFR bot, we import the `leduc_cfr.py` file and execute its train function, passing it the parameter `n_iterations` to specify how many iterations we wanna train it for (the larger the number of iterations, the closer the two players conforming the bot will be to reaching a Nash equilibrium).
 
-`leduc_game.py` simulates a game consisting of `n_rounds` rounds of Leduc poker between two players whose strategies are given, and returns an array 
-storing the accumulated utility of the first player for each iteration of the game.
+```python
+import leduc_cfr
 
-In `cfr_vs_others.py`, two bots are created: `random_strat`, whose actions are totally random, and `honest_strat`, which plays
-aggressively when having a strong hand and passively when having a weak one. Both bots are put to play for `n_rounds=10000`
-iterations against our CFR bot, and our bot clearly dominates the two others, beating `random_strat` at a rate of 0.5 chips per
-round and beating `honest_strat` at a rate of 0.1 chips per round, as we can see in the graph below:
+ev, i_map = leduc_cfr.train(n_iterations=5000)
+```
+
+`ev`, the first value that the `train` function returns, is the expected value of the first player to make a move in the CFR algorithm. At a Nash equilibrium, this value is around -0.06 (the reason being that the
+first player to make a move in a poker game is always at a slight disadvantage for lacking information with respect to the second player), so this is a good indicator of how close to optimality our strategy is.
+
+`i_map` is a dictionary where each key is a possible state in the game, and its corresponding value is the information set; an instance of the class InformationSet storing information associated to that game state, such as the regrets or the strategy.
+
+We can now get retrieve the strategies stored in each information set for each game state to obtain a dictionary having game states as keys and their corresponding strategies as values, and export it to a json
+file, which make up for our bot's strategy:
+
+```python
+import json
+
+leduc_strats = {key: list(i_map[key].get_average_strategy()) for key in i_map}
+
+with open('leduc_strats.json', 'w') as f:
+    json.dump(leduc_strats, f)
+```
+
+We can also pretty print both of the CFR bot players' strategies along with their expected value by invoking the function display_results:
+
+```python
+leduc_cfr.display_results(ev, i_map)
+```
+
+## Comparing our CFR bot's performance against other bots
+
+`leduc_game.py` is used to simulate `n_rounds` rounds of Leduc poker between two players whose strategies are given, and returns an array storing the accumulated gain for the first player in each iteration of the game.
+
+We now implement two basic poker bots: : a random player `random_strat`, whose actions are totally random, and an honest player `honest_strat`, which plays aggressively when having a good enough hand, 
+passively when having a medium hand, and passes or folds when they have a bad hand:
+
+
+```python
+from numpy.random import choice
+import numpy as np
+import game_utils as gu
+
+def random_strat(history, card, flop=None):
+    '''Strategy corresponding to a player whose actions are totally random'''
+    valid_actions = gu.valid_actions(history)
+    return choice(valid_actions)
+
+def honest_strat(history, card, flop=None):
+    def passive_move(history):
+        if not history or history[-1]=='x' or history[-1]=='d':
+            return 'x'
+        elif history[-1] == 'b':
+            return 'c'
+        else:
+            return 'f'
+
+    def get_preflop_action(history, card):
+        val_act = gu.valid_actions(history)
+        if card == "J":
+            return val_act[0]
+        elif card == "K":
+            return val_act[-1]
+        elif card == "Q":
+            return passive_move(history)
+
+    def get_postflop_action(history, card, flop):
+        val_act = gu.valid_actions(history)
+        hand_rank = gu.rank(card+flop)
+        if 1 <= hand_rank <=3:
+            return val_act[-1]
+        elif 4 <= hand_rank <=5:
+            return passive_move(history)
+        else:
+            return val_act[-1]
+
+    if flop:
+        return get_postflop_action(history, card, flop)
+    else:
+        return get_preflop_action(history, card)
+```
+
+We also write a function that returns the CFR strategy corresponding to a given history and hand:
+
+```python
+import json
+
+with open('leduc_strats.json') as f:
+    leduc_strats = json.load(f)
+
+def cfr_strat_as_function(history, card, flop=None):
+    if flop:
+        return choice(gu.valid_actions(history), p = leduc_strats[card+flop+" "+history])
+    else:
+        return choice(gu.valid_actions(history), p = leduc_strats[card+" "+history])
+```
+
+We now put the CFR bot to play against both bots and plot the results:
+
+```python
+import matplotlib.pyplot as plt
+import leduc_game
+
+n_rounds = 10000
+
+accum_utils_vs_honest = leduc_game.simulate_poker_game(
+    cfr_strat_as_function, 
+    honest_strat,
+    n_rounds
+    )
+
+accum_utils_vs_random = leduc_game.simulate_poker_game(
+    cfr_strat_as_function, 
+    random_strat,
+    n_rounds
+    )
+
+xx = np.arange(0, n_rounds, dtype=int)
+plt.plot(xx, accum_utils_vs_honest, label='CFR vs honest')
+plt.plot(xx, accum_utils_vs_random, label='CFR vs random')
+plt.legend(fontsize=7)
+plt.show()
+```
+
+We can see that after `n_rounds=10000` iterations, our CFR bot clearly dominates the two others, beating `random_strat` at a rate of 0.5 chips per round and beating `honest_strat` at a rate of 0.1 chips per round, as the graph below shows:
 
 
 ![Alt text](https://github.com/scfenton6/leduc-cfr-poker-bot/blob/main/earnings_graph.png?raw=true "Optional Title")
