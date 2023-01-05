@@ -152,12 +152,8 @@ def train(n_iterations = 100000):
             i_map[key].update_strategy()  # after each iteration, update strategy for each information set according to updated regrets
 
     expected_game_value /= n_iterations
-    display_results(expected_game_value, i_map)
 
-    leduc_strats = {hist: list(i_map[hist].get_average_strategy()) for hist in i_map}
-
-    with open('leduc_strats.json', 'w') as f:
-        json.dump(leduc_strats, f)
+    return expected_game_value, i_map
 
 if __name__ == "__main__":
     train()
