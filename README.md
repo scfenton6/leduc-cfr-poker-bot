@@ -54,7 +54,7 @@ To train the CFR bot, we import the `leduc_cfr.py` file and execute its train fu
 ```python
 import leduc_cfr
 
-ev, i_map = leduc_cfr.train(n_iterations=5000)
+ev, i_map = leduc_cfr.train(n_iterations=100000)
 ```
 
 `ev`, the first value that the `train` function returns, is the expected value of the first player to make a move in the CFR algorithm. At a Nash equilibrium, this value is around -0.06 (the reason being that the
